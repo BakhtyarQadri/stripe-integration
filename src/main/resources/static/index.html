@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Checkout</title>
+    <script src="https://js.stripe.com/v3/"></script> <!-- using Stripe.js to redirect users to Stripe hosted payment page -->
+</head>
+<body>
+    <button id="checkout-button">Pay Now</button>
+
+    <script>
+        const stripe = Stripe("pk_test_51QyXHzD6FeG87EI5s5H2TF4vL7Pov4iFzf1BNT2R3pHF8GwjIRtKwDf9rujAN5qEIUDoNXv6PLAxuYqBsW74vCAT000PvzmAAY");
+        document.getElementById("checkout-button").addEventListener("click", async () => {
+            const paymentReqBody = {
+                name: "Product 1",
+                quantity: 1,
+                amount: 100,
+                currency: "USD"
+            };
+            try {
+                const resp = await fetch("http://localhost:8080/checkout/payment/v1/stripe", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(paymentReqBody)
+                });
+                if (!resp.ok) {
+                    console.error("Error occurred: ", resp);
+                }
+                const respBody = await resp.json();
+                const stripeResp = await stripe.redirectToCheckout({ sessionId: respBody.sessionId });
+                if (stripeResp.error) {
+                    console.error("Stripe Error: ", stripeResp.error.message);
+                }
+            } catch (exception) {
+                console.error("Exception occurred: ", exception);
+            }
+
+            // fetch("http://localhost:8080/checkout/payment/v1/stripe", {
+            //     method: "POST",
+            //     headers: {"Content-Type": "application/json"},
+            //     body: JSON.stringify(paymentReqBody)
+            // })
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         return stripe.redirectToCheckout({sessionId: data.sessionId});
+            //     })
+            //     .then(result => {
+            //         if (result.error) {
+            //             alert(result.error.message);
+            //         }
+            //     })
+            //     .catch(error => {
+            //         console.error("Error:", error);
+            //     });
+        });
+    </script>
+</body>
+</html>
