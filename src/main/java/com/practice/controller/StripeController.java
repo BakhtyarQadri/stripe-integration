@@ -2,8 +2,6 @@ package com.practice.controller;
 
 import com.practice.dto.PaymentRequest;
 import com.practice.dto.StripeResponse;
-import com.stripe.Stripe;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -14,15 +12,10 @@ import com.stripe.model.checkout.Session;
 @CrossOrigin("http://localhost:63342") // to allow frontend call
 public class StripeController {
 
-    @Value("${stripe.secret.key}")
-    private String stripeSecretKey;
-
     @PostMapping("/v1/stripe")
     public ResponseEntity<StripeResponse> getStripeSession(
             @RequestBody PaymentRequest reqBody
     ) {
-        Stripe.apiKey = stripeSecretKey;
-
         var params = SessionCreateParams.builder()
                         .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
                         .addPaymentMethodType(SessionCreateParams.PaymentMethodType.ALIPAY)
