@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 2rem; }
+        #card-element {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        button {
+            background-color: #5469d4;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #4558c9;
+        }
+        #payment-result {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Stripe Payment</h2>
+<p>Use test card: <b>4242 4242 4242 4242</b>, any future date, CVC: 123</p>
+
+<form id="payment-form">
+    <div id="card-element"></div>
+    <button type="submit">Pay</button>
+    <div id="payment-result"></div>
+</form>
+
+<script>
+    const stripe = Stripe("pk_test_51QyXHzD6FeG87EI5s5H2TF4vL7Pov4iFzf1BNT2R3pHF8GwjIRtKwDf9rujAN5qEIUDoNXv6PLAxuYqBsW74vCAT000PvzmAAY");
+    const paymentReqBody = {
+        amount: 100, // $50 = 5000
+        currency: "USD"
+    };
+    fetch("http://localhost:8080/checkout/payment/v2/stripe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(paymentReqBody)
+    })
+        .then(resp => resp.json())
+        .then(data => {
+            const elements = stripe.elements();
+            const card = elements.create("card", {
+                style: {
+                    base: {
+                        color: "#32325d",
+                        fontSize: "16px",
+                        "::placeholder": { color: "#aab7c4" },
+                    },
+                    invalid: { color: "#fa755a" },
+                }
+            });
+            card.mount("#card-element");
+
+            const form = document.getElementById("payment-form");
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const { error, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret, {
+                    payment_method: { card }
+                });
+
+                const result = document.getElementById("payment-result");
+                if (error) {
+                    result.textContent = error.message;
+                    result.style.color = "red";
+                } else {
+                    result.textContent = "Payment successful!";
+                    result.style.color = "green";
+                }
+            });
+        });
+</script>
+</body>
+</html>

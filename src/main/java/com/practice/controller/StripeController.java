@@ -2,18 +2,23 @@ package com.practice.controller;
 
 import com.practice.dto.PaymentRequest;
 import com.practice.dto.StripeResponse;
+import com.stripe.model.PaymentIntent;
+import com.stripe.param.PaymentIntentCreateParams;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @CrossOrigin("http://localhost:63342") // to allow frontend call
 public class StripeController {
 
     @PostMapping("/v1/stripe")
-    public ResponseEntity<StripeResponse> getStripeSession(
+    public ResponseEntity<StripeResponse> createStripeSession(
             @RequestBody PaymentRequest reqBody
     ) {
         var params = SessionCreateParams.builder()
@@ -63,25 +68,34 @@ public class StripeController {
         return "error occurred";
     }
 
-//    @PostMapping("/v2/stripe")
-//    public Map<String, Object> stripePayment2(@RequestParam Long amount, @RequestParam String currency) throws StripeException {
-//        Stripe.apiKey = secretKey;
+    @PostMapping("/v2/stripe")
+    public Map<String, String> createStripePaymentIntent(@RequestBody Map<String, Object> reqBody) throws StripeException {
+        Long amount = Long.parseLong(reqBody.get("amount").toString());
+        String currency = reqBody.get("currency").toString();
+
+        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+                .setAmount(amount)
+                .setCurrency(currency)
+                .build();
+
+        PaymentIntent intent = PaymentIntent.create(params);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("clientSecret", intent.getClientSecret());
+        return response;
+
 //        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
 //                .setAmount(amount * 100)  // Convert to the smallest currency unit
 //                .setCurrency(currency)
 //                .build();
-//
 //        PaymentIntent paymentIntent = PaymentIntent.create(params);
-//
-//        // Extract only relevant fields
 //        Map<String, Object> response = new HashMap<>();
 //        response.put("id", paymentIntent.getId());
 //        response.put("status", paymentIntent.getStatus());
 //        response.put("clientSecret", paymentIntent.getClientSecret());
 //        response.put("amount", paymentIntent.getAmount());
 //        response.put("currency", paymentIntent.getCurrency());
-//
 //        return response;
-//    }
+    }
 
 }
